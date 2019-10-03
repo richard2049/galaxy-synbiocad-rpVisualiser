@@ -8,6 +8,7 @@ FROM continuumio/miniconda3
 
 #### update
 RUN apt-get update && apt-get upgrade -y
+RUN apt-get instass --yes wget
 RUN conda update -n base -c defaults conda
 
 #RUN pip install networkx cirpy pubchempy beautifulsoup4
@@ -31,6 +32,8 @@ COPY rpviz.tar.xz .
 COPY rpVisualiserServe.py .
 
 RUN tar xf rpviz.tar.xz 
+
+RUN wget https://www.metanetx.org/cgi-bin/mnxget/mnxref/chem_prop.tsv -P rpviz/
 
 # Start the server
 ENTRYPOINT ["python"] 
