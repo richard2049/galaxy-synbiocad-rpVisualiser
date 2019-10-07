@@ -8,7 +8,7 @@ FROM continuumio/miniconda3
 
 #### update
 RUN apt-get update && apt-get upgrade -y
-RUN apt-get instass --yes wget
+RUN apt-get install --yes wget
 RUN conda update -n base -c defaults conda
 
 #RUN pip install networkx cirpy pubchempy beautifulsoup4
