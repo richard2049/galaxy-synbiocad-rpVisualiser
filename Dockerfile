@@ -1,29 +1,31 @@
 # Docker file that installs docker container for Selprom
 #
-# build with: "sudo docker build -t Dockerfile ."
+# build with: "sudo docker build -t <image_name> ."
 
 # Install basic image
 FROM continuumio/miniconda3
 #FROM continuumio/anaconda3:4.4.0
 
 #### update
-RUN apt-get update && apt-get upgrade -y
-RUN apt-get install --yes wget
-RUN conda update -n base -c defaults conda
+RUN apt-get update \
+ && apt-get upgrade -y \
+ && apt-get install --yes wget \
+ && conda update -n base -c defaults conda
 
 #RUN pip install networkx cirpy pubchempy beautifulsoup4
 RUN pip install cirpy pubchempy
 
 # Install additional tools
-RUN conda install -c conda-forge flask-restful=0.3.6
-RUN conda install -c sbmlteam python-libsbml
-RUN conda install -c anaconda networkx
-RUN conda install -c anaconda beautifulsoup4
-RUN conda install -c conda-forge xorg-libxrender
-RUN conda install -c anaconda lxml
-RUN conda install -c anaconda ipython
-RUN conda install -c conda-forge py2cytoscape 
-RUN conda install -c rdkit rdkit
+RUN conda install -c \
+    conda-forge flask-restful=0.3.6 \
+    sbmlteam python-libsbml
+    anaconda networkx
+    anaconda beautifulsoup4
+    conda-forge xorg-libxrender
+    anaconda lxml
+    anaconda ipython
+    conda-forge py2cytoscape 
+    rdkit rdkit
 
 WORKDIR /home
 
