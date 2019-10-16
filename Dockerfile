@@ -9,7 +9,7 @@ FROM continuumio/miniconda3
 #### update
 RUN apt-get update \
  && apt-get upgrade -y \
- && apt-get install -y wget
+ && apt-get install -y wget python-pip
 RUN conda install -c anaconda setuptools \
  && conda update -n base -c defaults conda
 
