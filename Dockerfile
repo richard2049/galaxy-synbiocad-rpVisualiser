@@ -9,8 +9,8 @@ FROM continuumio/miniconda3
 #### update
 RUN apt-get update \
  && apt-get upgrade -y \
- && apt-get install --yes wget \
- && conda update -n base -c defaults conda
+ && apt-get install -y wget
+RUN conda update -n base -c defaults conda
 
 #RUN pip install networkx cirpy pubchempy beautifulsoup4
 RUN pip install cirpy pubchempy
