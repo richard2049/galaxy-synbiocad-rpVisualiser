@@ -19,14 +19,14 @@ RUN conda install -y -c anaconda setuptools \
 #RUN pip install networkx cirpy pubchempy beautifulsoup4
 
 # Install additional tools
-RUN conda install -c conda-forge flask-restful=0.3.6
- && conda install -c sbmlteam python-libsbml
- && conda install -c anaconda networkx
- && conda install -c anaconda beautifulsoup4
- && conda install -c conda-forge xorg-libxrender
- && conda install -c anaconda lxml
- && conda install -c anaconda ipython
- && conda install -c conda-forge py2cytoscape 
+RUN conda install -c conda-forge flask-restful=0.3.6 \
+ && conda install -c sbmlteam python-libsbml \
+ && conda install -c anaconda networkx \
+ && conda install -c anaconda beautifulsoup4 \
+ && conda install -c conda-forge xorg-libxrender \
+ && conda install -c anaconda lxml \
+ && conda install -c anaconda ipython \
+ && conda install -c conda-forge py2cytoscape \
  && conda install -c rdkit rdkit
 
 
