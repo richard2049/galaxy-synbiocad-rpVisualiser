@@ -18,13 +18,13 @@ RUN pip install cirpy pubchempy
 # Install additional tools
 RUN conda install -c \
     conda-forge flask-restful=0.3.6 \
-    sbmlteam python-libsbml
-    anaconda networkx
-    anaconda beautifulsoup4
-    conda-forge xorg-libxrender
-    anaconda lxml
-    anaconda ipython
-    conda-forge py2cytoscape 
+    sbmlteam python-libsbml \
+    anaconda networkx \
+    anaconda beautifulsoup4 \
+    conda-forge xorg-libxrender \
+    anaconda lxml \
+    anaconda ipython \
+    conda-forge py2cytoscape \
     rdkit rdkit
 
 WORKDIR /home
