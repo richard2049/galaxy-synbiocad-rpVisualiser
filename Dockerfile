@@ -32,16 +32,9 @@ RUN conda install -c conda-forge flask-restful=0.3.6 \
 
 WORKDIR /home
 
-#RUN git clone https://github.com/pablocarb/rpviz.git
-COPY rpviz.tar.xz .
-COPY rpVisualiserServe.py .
-
-RUN tar xf rpviz.tar.xz 
-
-RUN wget https://www.metanetx.org/cgi-bin/mnxget/mnxref/chem_prop.tsv -P rpviz/
 
 # Start the server
-ENTRYPOINT ["python"] 
+ENTRYPOINT ["python"]
 CMD ["/home/rpVisualiserServe.py"]
 
 # Open server port
