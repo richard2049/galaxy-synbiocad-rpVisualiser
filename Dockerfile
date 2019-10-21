@@ -32,6 +32,7 @@ RUN conda install -c conda-forge flask-restful=0.3.6 \
 
 WORKDIR /home
 
+COPY rpVisualiserServe.py .
 
 # Start the server
 ENTRYPOINT ["python"]
