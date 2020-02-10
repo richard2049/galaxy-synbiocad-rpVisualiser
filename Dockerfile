@@ -1,42 +1,18 @@
-# Docker file that installs docker container for Selprom
-#
-# build with: "docker build -t <image_name> ."
+FROM brsynth/rprest
 
-# Install basic image
-FROM continuumio/miniconda3
-#FROM continuumio/anaconda3:4.4.0
+RUN conda install -y -c rdkit rdkit=2019.03.1.0
+RUN conda install -y -c bioconda python-libsbml
+RUN conda install -y -c bioconda pubchempy
+RUN conda install -y -c conda-forge lxml
+RUN conda install -y -c conda-forge requests
+RUN conda install -y -c conda-forge cirpy
+RUN conda install -y -c conda-forge networkx
+RUN conda install -y -c conda-forge beautifulsoup4
+RUN conda install -y -c conda-forge matplotlib
 
-#### update
-RUN apt-get update \
- && apt-get upgrade -y \
- && apt-get install -y wget
+COPY rpviz /home/rpviz
 
-RUN pip install cirpy pubchempy
-
-RUN conda install -y -c anaconda setuptools \
- && conda update -y -n base -c defaults conda
-
-#RUN pip install networkx cirpy pubchempy beautifulsoup4
-
-# Install additional tools
-RUN conda install -c conda-forge flask-restful=0.3.6 \
- && conda install -c sbmlteam python-libsbml \
- && conda install -c anaconda networkx \
- && conda install -c anaconda beautifulsoup4 \
- && conda install -c conda-forge xorg-libxrender \
- && conda install -c anaconda lxml \
- && conda install -c anaconda ipython \
- && conda install -c conda-forge py2cytoscape \
- && conda install -c rdkit rdkit
-
-
-WORKDIR /home
-
-COPY rpVisualiserServe.py .
-
-# Start the server
-ENTRYPOINT ["python"]
-CMD ["/home/rpVisualiserServe.py"]
-
-# Open server port
-EXPOSE 8998
+RUN apt-get install -y libxrender1
+RUN pip install opencv-python
+RUN apt update && apt install -y libsm6 libxext6
+#RUN apt-get install -y libsm6 libxrender1 libfontconfig1
