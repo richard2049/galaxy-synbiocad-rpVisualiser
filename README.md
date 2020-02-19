@@ -1,4 +1,5 @@
-# rpviz
+# rpVisualiser
+
 Visualisation of pathways predicted from the RetroPath Suite.
 
 ## Important
@@ -21,13 +22,15 @@ conda activate rpviz
 python -m rpviz.cli '../data/Galaxy1015-[rpGlobalScore].tar' ../data/outfolder_test_42
 ```
 
-## Build the docker
+## Installing
+
+### Build the docker
 
 ```
 docker build -t brsynth/rpvisualiser-rest -f Dockerfile .
 ```
 
-## Run the REST service
+### Run the REST service
 
 ```
 docker run -p 8875:8888 brsynth/rpvisualiser-rest
