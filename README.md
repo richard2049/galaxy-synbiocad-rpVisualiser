@@ -27,7 +27,7 @@ python -m rpviz.cli '../data/Galaxy1015-[rpGlobalScore].tar' ../data/outfolder_t
 ### Build the docker
 
 ```
-docker build -t brsynth/rpvisualiser-rest -f Dockerfile .
+docker build -t brsynth/rpvisualiser-standalone  .
 ```
 
 ### Run the REST service
