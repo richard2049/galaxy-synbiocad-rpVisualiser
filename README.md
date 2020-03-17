@@ -30,12 +30,6 @@ python -m rpviz.cli '../data/Galaxy1015-[rpGlobalScore].tar' ../data/outfolder_t
 docker build -t brsynth/rpvisualiser-standalone  .
 ```
 
-### Run the REST service
-
-```
-docker run -p 8875:8888 brsynth/rpvisualiser-rest
-```
-
 ## Setting up
 
 Below are instructions to set up a conda environment. This is still in development.
