@@ -81,7 +81,8 @@ def sbml_to_json(input_folder, pathway_id='rp_pathway'):
             brsynth_annot = rpsbml.readBRSYNTHAnnotation(reaction.getAnnotation())
             miriam_annot = rpsbml.readMIRIAMAnnotation(reaction.getAnnotation())
             # Build the node ID -- Based on the reaction SMILES
-            if brsynth_annot['smiles'] == '' or brsynth_annot['smiles'] is None:
+            tmp_smiles = None
+            if not 'smiles' in brsynth_annot:
                 try:
                     node_id = sorted(miriam_annot['metanetx'], key=lambda x: int(x.replace('MNXR', '')))[0]
                 except KeyError:
@@ -92,6 +93,7 @@ def sbml_to_json(input_folder, pathway_id='rp_pathway'):
                         continue
             else:
                 node_id = brsynth_annot['smiles']
+                tmp_smiles = brsynth_annot['smiles']
             # Build a new node if not met yet
             if node_id not in reac_nodes:
                 node = dict()
@@ -115,7 +117,7 @@ def sbml_to_json(input_folder, pathway_id='rp_pathway'):
                                 'url': 'http://identifiers.org/'+miriam_header['reaction'][xref]+str(ref)})
                         except KeyError:
                             pass
-                node['rsmiles'] = brsynth_annot['smiles']
+                node['rsmiles'] = tmp_smiles
                 node['rule_id'] = brsynth_annot['rule_id']
                 try:
                     node['ec_numbers'] = miriam_annot['ec-code']
@@ -134,7 +136,7 @@ def sbml_to_json(input_folder, pathway_id='rp_pathway'):
                 node['thermo_dg_m_formation'] = None
                 node['cofactor'] = None
                 # Store
-                reac_nodes[brsynth_annot['smiles']] = node
+                reac_nodes[tmp_smiles] = node
             # Update already existing node
             else:
                 if rpsbml.modelName not in reac_nodes[node_id]['path_ids']:
@@ -142,15 +144,11 @@ def sbml_to_json(input_folder, pathway_id='rp_pathway'):
                 if brsynth_annot['rule_id'] not in reac_nodes[node_id]['all_labels']:
                     reac_nodes[node_id]['all_labels'].append(brsynth_annot['rule_id'])
                 try:
-                    assert brsynth_annot['smiles'] == reac_nodes[node_id]['rsmiles']
+                    assert tmp_smiles == reac_nodes[node_id]['rsmiles']
                 except AssertionError as e:
                     logging.warning(e)
                 try:
                     assert brsynth_annot['rule_id'] == reac_nodes[node_id]['rule_id']
-                except AssertionError as e:
-                    logging.warning(e)
-                try:
-                    assert brsynth_annot['smiles'] == reac_nodes[node_id]['rsmiles']
                 except AssertionError as e:
                     logging.warning(e)
             # Keep track for pathway info
@@ -162,13 +160,17 @@ def sbml_to_json(input_folder, pathway_id='rp_pathway'):
         largest_rp_reac_id = sorted([i.getIdRef() for i in rp_pathway.getListOfMembers()], key=lambda x: int(x.replace('RP', '')), reverse=True)[0]
         reactants = [i.species for i in rpsbml.model.getReaction(largest_rp_reac_id).getListOfReactants()]
         central_species = [i.getIdRef() for i in groups.getGroup('central_species').getListOfMembers()]
-        sink_molecules_inchikey = [rpsbml.readBRSYNTHAnnotation(rpsbml.model.getSpecies(i).getAnnotation())['inchikey'] for i in reactants if i in central_species]
+        sink_molecules_inchikey = []
+        for i in reactants if i in central_species:
+            spec_annot = rpsbml.readBRSYNTHAnnotation(rpsbml.model.getSpecies(i).getAnnotation())
+            if 'inchikey' in spec_annot:
+                sink_molecules_inchikey.append(spec_annot['inchikey'])
         for species_name in rpsbml.readUniqueRPspecies():
             species = rpsbml.model.getSpecies(species_name)
             brsynth_annot = rpsbml.readBRSYNTHAnnotation(species.getAnnotation())
             miriam_annot = rpsbml.readMIRIAMAnnotation(species.getAnnotation())
             # Build the node ID -- Based on if available the inchikey, else on MNX crosslinks
-            if brsynth_annot['inchikey'] == '' or brsynth_annot['inchikey'] is None:
+            if not 'inchikey' in brsynth_annot:
                 try:
                     node_id = sorted(miriam_annot['metanetx'], key=lambda x: int(x.replace('MNXM', '')))[0]
                 except KeyError:
@@ -215,9 +217,24 @@ def sbml_to_json(input_folder, pathway_id='rp_pathway'):
                 node['ec_numbers'] = None
                 node['thermo_dg_m_gibbs'] = None 
                 #node['fba_reaction'] = None
-                node['smiles'] = brsynth_annot['smiles']
-                node['inchi'] = brsynth_annot['inchi']
-                node['inchikey'] = brsynth_annot['inchikey']
+                tmp_smiles = None
+                tmp_inchi = None
+                tmp_inchikey = None
+                try:
+                    node['smiles'] = brsynth_annot['smiles']
+                    tmp_smiles = brsynth_annot['smiles']
+                except KeyError:
+                    node['smiles'] = None
+                try:
+                    node['inchi'] = brsynth_annot['inchi']
+                    tmp_inchi = brsynth_annot['inchi']
+                except KeyError:
+                    node['inchi'] = None
+                try:
+                    node['inchikey'] = brsynth_annot['inchikey']
+                    tmp_inchikey = brsynth_annot['inchikey']
+                except KeyError:
+                    node['inchikey'] = None
                 #TODO: need a better way if not TARGET in name
                 if species_name[:6] == 'TARGET':  
                     node['target_chemical'] = 1
@@ -238,7 +255,7 @@ def sbml_to_json(input_folder, pathway_id='rp_pathway'):
                     chem_nodes[node_id]['path_ids'].append(rpsbml.modelName)
                 # TODO: manage xref, without adding duplicates
                 try:
-                    assert brsynth_annot['smiles'] == chem_nodes[node_id]['smiles']
+                    assert tmp_smiles == chem_nodes[node_id]['smiles']
                 except AssertionError:
                     msg = 'Not the same SMILES: {} vs. {}'.format(
                         brsynth_annot['smiles'],
@@ -246,7 +263,7 @@ def sbml_to_json(input_folder, pathway_id='rp_pathway'):
                     )
                     logging.warning(msg)
                 try:
-                    assert brsynth_annot['inchi'] == chem_nodes[node_id]['inchi']
+                    assert tmp_inchi == chem_nodes[node_id]['inchi']
                 except AssertionError:
                     msg = 'Not the same INCHI: {} vs. {}'.format(
                         brsynth_annot['inchi'],
@@ -254,7 +271,7 @@ def sbml_to_json(input_folder, pathway_id='rp_pathway'):
                     )
                     logging.warning(msg)
                 try:
-                    assert brsynth_annot['inchikey'] == chem_nodes[node_id]['inchikey']
+                    assert tmp_inchikey == chem_nodes[node_id]['inchikey']
                 except AssertionError:
                     msg = 'Not the same INCHIKEY: {} vs. {}'.format(
                         brsynth_annot['inchikey'],
@@ -271,7 +288,7 @@ def sbml_to_json(input_folder, pathway_id='rp_pathway'):
             reac_brsynth_annot = rpsbml.readBRSYNTHAnnotation(reaction.getAnnotation())
             reac_miriam_annot = rpsbml.readMIRIAMAnnotation(reaction.getAnnotation())
             # Deduce reaction ID -- TODO: make this more robust
-            if reac_brsynth_annot['smiles'] == '' or reac_brsynth_annot['smiles'] is None:
+            if not 'smiles' in reac_brsynth_annot:
                 try:
                     reac_nodeid = sorted(reac_miriam_annot['metanetx'], key=lambda x: int(x.replace('MNXR', '')))[0]
                 except KeyError:
@@ -285,7 +302,7 @@ def sbml_to_json(input_folder, pathway_id='rp_pathway'):
                 spe_brsynth_annot = rpsbml.readBRSYNTHAnnotation(species.getAnnotation())
                 spe_miriam_annot = rpsbml.readMIRIAMAnnotation(species.getAnnotation())
                 # Deduce chemical ID -- TODO: make this more robust
-                if spe_brsynth_annot['inchikey'] == '' or spe_brsynth_annot['inchikey'] is None:
+                if not 'inchikey' in spe_brsynth_annot:
                     try:
                         spe_nodeid = sorted(spe_miriam_annot['metanetx'], key=lambda x: int(x.replace('MNXM', '')))[0]
                     except KeyError:
@@ -325,7 +342,7 @@ def sbml_to_json(input_folder, pathway_id='rp_pathway'):
                 spe_brsynth_annot = rpsbml.readBRSYNTHAnnotation(species.getAnnotation())
                 spe_miriam_annot = rpsbml.readMIRIAMAnnotation(species.getAnnotation())
                 # Deduce chemical ID -- TODO: make this more robust
-                if spe_brsynth_annot['inchikey'] == '' or spe_brsynth_annot['inchikey'] is None:
+                if 'inchikey' in spe_brsynth_annot:
                     try:
                         spe_nodeid = sorted(spe_miriam_annot['metanetx'], key=lambda x: int(x.replace('MNXM', '')))[0]
                     except KeyError:
