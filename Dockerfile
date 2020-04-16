@@ -12,6 +12,7 @@ RUN conda install -y -c conda-forge beautifulsoup4
 RUN conda install -y -c conda-forge matplotlib
 
 COPY rpviz /home/rpviz
+COPY /home/rpSBML.py /home/rpviz/
 
 RUN apt-get update
 RUN apt-get install -y libxrender1
