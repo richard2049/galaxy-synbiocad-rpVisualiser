@@ -48,20 +48,11 @@ def sbml_to_json(input_folder, pathway_id='rp_pathway'):
         norm_scores.append('global_score')
         ############## pathway_id ##############
         scores = {}
-        for i in norm_scores:
-            scores[i] = brsynth_annot[i]['value']
-        target_flux_list = [i for i in brsynth_annot if i[:16]=='fba_obj_RP1_sink']
-        if len(target_flux_list)==0:
+        try:
+            target_flux = brsynth_annot['fba_obj_fraction']['value']
+        except KeyError:
+            logging.warning('Cannot retreive objective function fba_obj_fraction, must be another one')
             target_flux = 0.0
-        elif len(target_flux_list)==1:
-            target_flux = brsynth_annot[target_flux_list[0]]['value']
-        else:
-            #multiple values
-            for i in target_flux_list:
-                if len(i.split('__'))==2:
-                    print
-            tmp = [i.split('__') for i in target_flux_list]
-            target_flux = []
         pathways_info[rpsbml.modelName] = {
             'path_id': rpsbml.modelName,
             'node_ids': [],
