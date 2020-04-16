@@ -65,10 +65,6 @@ def sbml_to_json(input_folder, pathway_id='rp_pathway'):
             'fba_target_flux': target_flux,
             'thermo_dg_m_gibbs': None,
         }
-        logging.info('###############')
-        logging.info(rpsbml.modelName)
-        logging.info(pathways_info[rpsbml.modelName])
-        logging.info('###############')
         try:
             pathways_info[rpsbml.modelName]['thermo_dg_m_gibbs'] = brsynth_annot['dfG_prime_m']['value']
         except KeyError:
@@ -256,27 +252,39 @@ def sbml_to_json(input_folder, pathway_id='rp_pathway'):
                 try:
                     assert tmp_smiles == chem_nodes[node_id]['smiles']
                 except AssertionError:
-                    msg = 'Not the same SMILES: {} vs. {}'.format(
-                        brsynth_annot['smiles'],
-                        chem_nodes[node_id]['smiles']
-                    )
-                    logging.warning(msg)
+                    try:
+                        msg = 'Not the same SMILES: {} vs. {}'.format(
+                            brsynth_annot['smiles'],
+                            chem_nodes[node_id]['smiles']
+                        )
+                        logging.warning(msg)
+                    except KeyError:
+                        logging.warning('The brsynth_annot has no smiles: '+str(node_id))
+                        logging.info(brsynth_annot)
                 try:
                     assert tmp_inchi == chem_nodes[node_id]['inchi']
                 except AssertionError:
-                    msg = 'Not the same INCHI: {} vs. {}'.format(
-                        brsynth_annot['inchi'],
-                        chem_nodes[node_id]['inchi']
-                    )
-                    logging.warning(msg)
+                    try:
+                        msg = 'Not the same INCHI: {} vs. {}'.format(
+                            brsynth_annot['inchi'],
+                            chem_nodes[node_id]['inchi']
+                        )
+                        logging.warning(msg)
+                    except KeyError:
+                        logging.warning('The brsynth_annot has no inchi: '+str(node_id))
+                        logging.info(brsynth_annot)
                 try:
                     assert tmp_inchikey == chem_nodes[node_id]['inchikey']
                 except AssertionError:
-                    msg = 'Not the same INCHIKEY: {} vs. {}'.format(
-                        brsynth_annot['inchikey'],
-                        chem_nodes[node_id]['inchikey']
-                    )
-                    logging.warning(msg)
+                    try:
+                        msg = 'Not the same INCHIKEY: {} vs. {}'.format(
+                            brsynth_annot['inchikey'],
+                            chem_nodes[node_id]['inchikey']
+                        )
+                        logging.warning(msg)
+                    except KeyError:
+                        logging.warning('The brsynth_annot has no inchi: '+str(node_id))
+                        logging.info(brsynth_annot)
             # Keep track for pathway info
             if node_id not in pathways_info[rpsbml.modelName]['node_ids']:
                 pathways_info[rpsbml.modelName]['node_ids'].append(node_id)

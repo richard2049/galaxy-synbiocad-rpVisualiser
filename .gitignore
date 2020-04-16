@@ -1,2 +1,3 @@
 *.swp
+rpviz/__pycache__
 *.ipynb
