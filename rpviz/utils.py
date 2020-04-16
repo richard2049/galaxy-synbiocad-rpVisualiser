@@ -14,7 +14,7 @@ import logging
 
 from collections import OrderedDict
 
-import rpSBML
+import rpviz.rpSBML as rpSBML
 
 miriam_header = {'compartment': {'go': 'go/GO:', 'mnx': 'metanetx.compartment/', 'bigg': 'bigg.compartment/', 'seed': 'seed/', 'name': 'name/'}, 'reaction': {'metanetx': 'metanetx.reaction/', 'rhea': 'rhea/', 'reactome': 'reactome/', 'bigg': 'bigg.reaction/', 'sabiork': 'sabiork.reaction/', 'ec-code': 'ec-code/', 'biocyc': 'biocyc/', 'lipidmaps': 'lipidmaps/'}, 'species': {'metanetx': 'metanetx.chemical/', 'chebi': 'chebi/CHEBI:', 'bigg': 'bigg.metabolite/', 'hmdb': 'hmdb/', 'kegg_c': 'kegg.compound/', 'kegg_d': 'kegg.drug/', 'biocyc': 'biocyc/META:', 'seed': 'seed.compound/', 'metacyc': 'metacyc.compound/', 'sabiork': 'sabiork.compound/', 'reactome': 'reactome/R-ALL-'}}
 
@@ -46,8 +46,11 @@ def sbml_to_json(input_folder, pathway_id='rp_pathway'):
         brsynth_annot = rpsbml.readBRSYNTHAnnotation(rp_pathway.getAnnotation())
         norm_scores = [i for i in brsynth_annot if i[:5]=='norm_']
         norm_scores.append('global_score')
+        logging.info('norm_scores: '+str(norm_scores))
         ############## pathway_id ##############
         scores = {}
+        for i in norm_scores:
+            scores[i] = brsynth_annot[i]['value']
         try:
             target_flux = brsynth_annot['fba_obj_fraction']['value']
         except KeyError:
@@ -62,6 +65,10 @@ def sbml_to_json(input_folder, pathway_id='rp_pathway'):
             'fba_target_flux': target_flux,
             'thermo_dg_m_gibbs': None,
         }
+        logging.info('###############')
+        logging.info(rpsbml.modelName)
+        logging.info(pathways_info[rpsbml.modelName])
+        logging.info('###############')
         try:
             pathways_info[rpsbml.modelName]['thermo_dg_m_gibbs'] = brsynth_annot['dfG_prime_m']['value']
         except KeyError:
@@ -152,10 +159,11 @@ def sbml_to_json(input_folder, pathway_id='rp_pathway'):
         reactants = [i.species for i in rpsbml.model.getReaction(largest_rp_reac_id).getListOfReactants()]
         central_species = [i.getIdRef() for i in groups.getGroup('central_species').getListOfMembers()]
         sink_molecules_inchikey = []
-        for i in reactants if i in central_species:
-            spec_annot = rpsbml.readBRSYNTHAnnotation(rpsbml.model.getSpecies(i).getAnnotation())
-            if 'inchikey' in spec_annot:
-                sink_molecules_inchikey.append(spec_annot['inchikey'])
+        for i in reactants:
+            if i in central_species:
+                spec_annot = rpsbml.readBRSYNTHAnnotation(rpsbml.model.getSpecies(i).getAnnotation())
+                if 'inchikey' in spec_annot:
+                    sink_molecules_inchikey.append(spec_annot['inchikey'])
         for species_name in rpsbml.readUniqueRPspecies():
             species = rpsbml.model.getSpecies(species_name)
             brsynth_annot = rpsbml.readBRSYNTHAnnotation(species.getAnnotation())
@@ -333,7 +341,7 @@ def sbml_to_json(input_folder, pathway_id='rp_pathway'):
                 spe_brsynth_annot = rpsbml.readBRSYNTHAnnotation(species.getAnnotation())
                 spe_miriam_annot = rpsbml.readMIRIAMAnnotation(species.getAnnotation())
                 # Deduce chemical ID -- TODO: make this more robust
-                if 'inchikey' in spe_brsynth_annot:
+                if not 'inchikey' in spe_brsynth_annot:
                     try:
                         spe_nodeid = sorted(spe_miriam_annot['metanetx'], key=lambda x: int(x.replace('MNXM', '')))[0]
                     except KeyError:
