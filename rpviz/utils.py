@@ -54,7 +54,7 @@ def sbml_to_json(input_folder, pathway_id='rp_pathway'):
                 scores[i] = brsynth_annot[i]['value']
             except KeyError:
                 logging.warning('Cannot retreive the following information in rpSBML: '+str(i)+'. Setting to 0.0...')
-                scores[i] = 0.0
+                pass
         try:
             target_flux = brsynth_annot['fba_obj_fraction']['value']
         except KeyError:
