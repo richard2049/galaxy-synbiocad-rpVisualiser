@@ -12,7 +12,7 @@ RUN conda install -y -c conda-forge beautifulsoup4
 RUN conda install -y -c conda-forge matplotlib
 
 COPY rpviz /home/rpviz
-RUN mv /home/rpSBML.py /home/rpviz/
+#RUN mv /home/rpSBML.py /home/rpviz/
 COPY tool_rpVisualiser.py /home/
 
 RUN apt-get update

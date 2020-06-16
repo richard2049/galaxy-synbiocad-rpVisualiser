@@ -52,9 +52,10 @@ def main(inputTar,
         container.wait()
         err = container.logs(stdout=False, stderr=True)
         err_str = err.decode('utf-8')
-        print(err_str)
         if not 'ERROR' in err_str:
             shutil.copy(tmpOutputFolder+'/output.dat', outputHTML)
+        else:
+            sbml_path
         container.remove()
 
 
