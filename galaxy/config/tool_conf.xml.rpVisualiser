@@ -1,0 +1,3 @@
+  <section id="sbc" name="SynBioCAD">
+    <tool file="rpVisualiser/code/wrap_rpVisualiser.xml" />
+  </section>
