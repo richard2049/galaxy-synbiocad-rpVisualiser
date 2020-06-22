@@ -1,0 +1,75 @@
+<tool id="rpVisualiser" name="Pathway Visualiser" version="0.1.0" >
+	<description>Pathway Visualiser</description>
+	<requirements>
+    <container type="docker">brsynth/rpvisualiser-standalone:dev</container>
+	</requirements>
+	<command detect_errors="exit_code"><![CDATA[
+		'$__tool_directory__/tool_rpVisualiser.py' -input '$input_type.input' -input_format '$input_type.input_format' -output '$output'
+	]]></command>
+	<inputs>
+    <conditional name="input_type">
+      <param name="input_format" type="select" label="Input/output format">
+        <option value="tar" selected="True">TAR</option>
+        <option value="sbml">SBML</option>
+      </param>
+      <when value="tar">
+        <param name="input" type="data" format="tar" label="Input file" />
+      </when>
+      <when value="sbml">
+        <param name="input" type="data" format="sbml" label="Input file" />
+      </when>
+    </conditional>
+	</inputs>
+	<outputs>
+		<data name="output" format="html" label="Pathways HTML"/>
+	</outputs>
+	<help><![CDATA[
+Pathway Visualiser
+==========================
+		
+This tool provides a graphical output of the heterologous pathway and the calculated pathway characteristics.
+
+Input
+------
+
+Required:
+
+* **-input_format**\ : (string) Format of the input (tar or sbml)
+* **-input**\ : (string) Path to the input file
+
+Output
+------
+
+* **output**\ : (string) Path to the HTML file
+
+Project Links
+---------------------
+
+* `GitHub <https://github.com/Galaxy-SynBioCAD/rpVisualiser>`_
+
+Version
+----------
+
+0.1
+
+Authors
+-------
+
+* **Thomas Duigou**
+* Melchior du Lac 
+
+License
+-------
+
+`MIT <https://raw.githubusercontent.com/Galaxy-SynBioCAD/rpVisualiser/standalone-dev/LICENSE>`_
+
+
+Acknowledgments
+---------------
+
+* Anaelle Badier
+* Pablo Carbonell
+* Joan Hérisson
+
+]]></help>
+</tool>
