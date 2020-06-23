@@ -13,7 +13,7 @@ RUN conda install -y -c conda-forge matplotlib
 
 COPY rpviz /home/rpviz
 #RUN mv /home/rpSBML.py /home/rpviz/
-COPY tool_rpVisualiser.py /home/
+COPY galaxy/code/tool_rpVisualiser.py /home/
 
 RUN apt-get update
 RUN apt-get install -y libxrender1
