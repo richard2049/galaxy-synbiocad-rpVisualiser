@@ -14,7 +14,7 @@ import logging
 import shutil
 import docker
 import subprocess
-
+import random
 
 
 ##
@@ -22,9 +22,9 @@ import subprocess
 #
 def main(inputTar,
          input_format,
-         outputHTML):
+         output):
     docker_client = docker.from_env()
-    image_str = 'brsynth/rpvisualiser-standalone'
+    image_str = 'brsynth/rpvisualiser-standalone:survey'
     try:
         image = docker_client.images.get(image_str)
     except docker.errors.ImageNotFound:
@@ -53,7 +53,7 @@ def main(inputTar,
         err = container.logs(stdout=False, stderr=True)
         err_str = err.decode('utf-8')
         if not 'ERROR' in err_str:
-            shutil.copy(tmpOutputFolder+'/output.dat', outputHTML)
+            shutil.copy(tmpOutputFolder+'/output.dat', output)
         else:
             print(err_str)
         container.remove()

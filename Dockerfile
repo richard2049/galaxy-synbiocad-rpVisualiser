@@ -11,12 +11,13 @@ RUN conda install -y -c conda-forge networkx
 RUN conda install -y -c conda-forge beautifulsoup4
 RUN conda install -y -c conda-forge matplotlib
 
-COPY rpviz /home/rpviz
-#RUN mv /home/rpSBML.py /home/rpviz/
-COPY galaxy/code/tool_rpVisualiser.py /home/
-
 RUN apt-get update
 RUN apt-get install -y libxrender1
 RUN pip install opencv-python
 RUN apt update && apt install -y libsm6 libxext6
+
+COPY rpviz /home/rpviz
+#RUN mv /home/rpSBML.py /home/rpviz/
+COPY galaxy/code/tool_rpVisualiser.py /home/
+
 #RUN apt-get install -y libsm6 libxrender1 libfontconfig1

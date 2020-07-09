@@ -215,7 +215,7 @@ class PathwayHandler {
         }
         let min_score = Math.min(...list_of_values);
         let max_score = Math.max(...list_of_values);
-        let colour_maker = chroma.scale('RdYlBu').domain([max_score, min_score]);
+        let colour_maker = chroma.scale(['red', 'green', 'blue']).domain([max_score, min_score]);
         // Finally colourise
         for (let i = 0; i < items.length; i++){
             // Get values
@@ -352,9 +352,14 @@ function panel_chemical_info(node, show=false){
         let inchi = node.data('inchi');
         let inchikey = node.data('inchikey');
         if (node.data('cofactor') == 1){
-            var cofactor = 'True';
+            var cofactor = 'Yes';
         } else {
-            var cofactor = 'False';
+            var cofactor = 'No';
+        }
+        if (node.data('sink_chemical') == 1){
+            var insink = 'Yes';
+        } else {
+            var insink = 'No';
         }
         let xlinks = node.data('xlinks');
         let path_ids = node.data('path_ids');
@@ -382,6 +387,8 @@ function panel_chemical_info(node, show=false){
             $("span.chem_info_smiles_search").html('<a target="_blank" href="https://pubchem.ncbi.nlm.nih.gov/search/#collection=compounds&query_type=structure&query_subtype=identity&query=' + encodeURI(smiles) + '">Look for identical structure using PubChem</a>');
         }
         $("span.chem_info_iscofactor").html(cofactor);
+        $("span.chem_info_isprecursor").html(insink);
+        
         // Inject SVG depiction as a background image (if any)
         if (svg !== null && svg !== ""){
             $('div.img-box').show();
@@ -428,6 +435,7 @@ function panel_reaction_info(node, show=true){
         let ec_numbers = node.data('ec_numbers');
         let xlinks = node.data('xlinks');
         let thermo_value = node.data('thermo_dg_m_gibbs');
+        let rule_score = node.data('rule_score');
         // Inject 
         $("span.reaction_info_rsmiles").html(rsmiles);
         // Reaction name
@@ -473,6 +481,13 @@ function panel_reaction_info(node, show=true){
             thermo_value = parseFloat(thermo_value).toFixed(3);
         }
         $("span.reaction_info_thermo").html(thermo_value);
+        // Rule score
+        if (isNaN(rule_score)){
+            rule_score = "NaN";
+        } else {
+            rule_score = parseFloat(rule_score).toFixed(3);
+        }
+        $("span.reaction_info_rule_score").html(rule_score);
         // Selenzyme crosslink
         $("span.reaction_info_selenzyme_crosslink").html('<a target="_blank" href="http://selenzyme.synbiochem.co.uk/results?smarts=' + encodeURIComponent( rsmiles ) + '">Crosslink to Selenzyme</a>');
         // Show
@@ -504,6 +519,7 @@ function panel_pathway_info(path_id, show=true){
         // Collect
         let global_score = pathways_info[path_id]['scores']['global_score'];
         let thermo_value = pathways_info[path_id]['thermo_dg_m_gibbs'];
+        let rule_score = pathways_info[path_id]['rule_score'];
         let fba_value = pathways_info[path_id]['fba_target_flux'];
         let nb_steps = pathways_info[path_id]['nb_steps'];
         // Refine the global score value
@@ -518,6 +534,12 @@ function panel_pathway_info(path_id, show=true){
         } else {
             thermo_value = parseFloat(thermo_value).toFixed(3);
         }
+        // Refines rule score
+        if (isNaN(rule_score)){
+            rule_score = "NaN";
+        } else {
+            rule_score = parseFloat(rule_score).toFixed(3);
+        }
         // Refines target's flux production
         if (isNaN(fba_value)){
             fba_value = "NaN";
@@ -528,6 +550,7 @@ function panel_pathway_info(path_id, show=true){
         $("span.pathway_info_path_id").html(path_id);
         $("span.pathway_info_global_score").html(global_score);
         $("span.pathway_info_thermo").html(thermo_value);
+        $("span.pathway_info_rule_score").html(rule_score);
         $("span.pathway_info_target_flux").html(fba_value);
         $("span.pathway_info_nb_steps").html(nb_steps);
         // Show
@@ -619,7 +642,8 @@ $(function(){
     panel_reaction_info(null, false);
     panel_pathway_info(null, false);
     init_network(true);
-    render_layout(cy.elements());
+    annotate_hiddable_cofactors();  // Need to be done after init_network so the network is already loaded
+    refresh_layout();
     show_cofactors(false);
     put_pathway_values('global_score');
     make_pathway_table_sortable();  // Should be called only after the table has been populated with values
@@ -820,6 +844,47 @@ $(function(){
         }
     }
 
+    /**
+     * Tag cofactor weither there could be hidden or not 
+     *
+     * If hidding cofactors lead to lonely / unconnected reactions then 
+     * cofactors related to sucbh reaction are marked as not hiddable.
+     * Otherwise, cofactors are marked as hiddable.
+     */
+    function annotate_hiddable_cofactors(){
+        cy.elements('node[type = "reaction"]').forEach((rxn_node, i) => {
+            // Check
+            let in_not_cof = rxn_node.incomers().filter('node[cofactor = 0]');
+            let out_not_cof = rxn_node.outgoers().filter('node[cofactor = 0]');
+            // Decide
+            let hiddable;
+            if (in_not_cof.length == 0 || out_not_cof.length == 0){
+                hiddable = 0;
+            } else {
+                hiddable = 1;
+            }
+            // Tag
+            let in_chems = rxn_node.incomers().filter('node');
+            in_chems.forEach((chem_node, j) => {
+                if (
+                    chem_node.data('cofactor') == 1 &&
+                    chem_node.data('hiddable_cofactor') != 0
+                ){
+                    chem_node.data('hiddable_cofactor', hiddable);
+                }
+            });
+            let out_chems = rxn_node.outgoers().filter('node');
+            out_chems.forEach((chem_node, j) => {
+                if (
+                    chem_node.data('cofactor' == 1) &&
+                    chem_node.data('hiddable_cofactor') != 0
+                ){
+                    chem_node.data('hiddable_cofactor', hiddable);
+                }
+            });
+        });
+    }
+
     /** Handle cofactor display
      *
      * Hide of show all nodes annotated as cofactor
@@ -830,9 +895,9 @@ $(function(){
         if (show){
             cy.elements().style("display", "element");
         } else {
-            cy.elements('node[cofactor = 1]').style("display", "none");
+            cy.elements('node[cofactor = 1][hiddable_cofactor = 1]').style("display", "none");
         }
-        render_layout(cy.elements().not(':hidden'));
+        refresh_layout();
     }
 
     /**
@@ -848,6 +913,13 @@ $(function(){
                 }
             }
         });
+    }
+    
+    /**
+     * Refresh layout according to visible nodes
+     */
+    function refresh_layout(){
+        render_layout(cy.elements().not(':hidden'));
     }
     
     // When a pathway is checked
@@ -907,6 +979,9 @@ $(function(){
     $('#view_all_pathways_button').on('click', function(event){
         show_pathways(selected_paths='__ALL__');  // Show all
         $('input[name=path_checkbox]').prop('checked', true);  // Check all
+    });
+    $('#redraw_pathways_button').on('click', function(event){
+        refresh_layout();
     });
     
     // Cofactors handling

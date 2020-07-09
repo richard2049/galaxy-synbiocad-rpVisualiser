@@ -12,6 +12,7 @@ import csv
 import glob
 import logging
 
+from statistics import mean
 from collections import OrderedDict
 
 import rpSBML
@@ -49,6 +50,7 @@ def sbml_to_json(input_folder, pathway_id='rp_pathway', sink_species_group_id='r
         logging.info('norm_scores: '+str(norm_scores))
         ############## pathway_id ##############
         scores = {}
+        pathway_rule_scores = []
         for i in norm_scores:
             try:
                 scores[i] = brsynth_annot[i]['value']
@@ -68,6 +70,7 @@ def sbml_to_json(input_folder, pathway_id='rp_pathway', sink_species_group_id='r
             'nb_steps': rp_pathway.num_members,
             'fba_target_flux': target_flux,
             'thermo_dg_m_gibbs': None,
+            'rule_score': None
         }
         try:
             pathways_info[rpsbml.modelName]['thermo_dg_m_gibbs'] = brsynth_annot['dfG_prime_m']['value']
@@ -108,13 +111,35 @@ def sbml_to_json(input_folder, pathway_id='rp_pathway', sink_species_group_id='r
                 node['xlinks'] = []
                 for xref in miriam_annot:
                     for ref in miriam_annot[xref]:
-                        try:
-                            node['xlinks'].append({
-                                'db_name': xref,
-                                'entity_id': ref,
-                                'url': 'http://identifiers.org/'+miriam_header['reaction'][xref]+str(ref)})
-                        except KeyError:
-                            pass
+                        # Refine EC annotations
+                        if xref == 'ec-code':
+                            # Getting rid of dashes
+                            old_ref = ref
+                            tmp = []
+                            for _ in ref.split('.'):
+                                if _ != '-':
+                                    tmp.append(_)
+                            ref = '.'.join(tmp)
+                            if old_ref != ref:
+                                logging.info('Refining EC number crosslinks from {} to {}'.format(old_ref, ref))
+                            # Use direct link to workaround generic ECs issue with identifiers.org
+                            try:
+                                node['xlinks'].append({
+                                    'db_name': 'intenz',
+                                    'entity_id': ref,
+                                    'url': 'https://www.ebi.ac.uk/intenz/query?cmd=SearchEC&ec=' + ref })
+                                logging.debug('Shunting identifiers.org to IntEnz crosslinks for EC number {}'.format(ref))
+                            except KeyError:
+                                pass
+                        # Generic case
+                        else:
+                            try:
+                                node['xlinks'].append({
+                                    'db_name': xref,
+                                    'entity_id': ref,
+                                    'url': 'http://identifiers.org/'+miriam_header['reaction'][xref]+str(ref)})
+                            except KeyError:
+                                pass
                 node['rsmiles'] = tmp_smiles
                 node['rule_id'] = brsynth_annot['rule_id']
                 try:
@@ -126,6 +151,12 @@ def sbml_to_json(input_folder, pathway_id='rp_pathway', sink_species_group_id='r
                 except KeyError:
                     node['thermo_dg_m_gibbs'] = None
                 #node['fba_reaction'] = '0'
+                try:
+                    node['rule_score'] = round(brsynth_annot['rule_score']['value'], 3)
+                    pathway_rule_scores.append(brsynth_annot['rule_score']['value'])
+                except KeyError:
+                    node['rule_score'] = None
+                    pathway_rule_scores.append(0.0)
                 node['smiles'] = None
                 node['inchi'] = None
                 node['inchikey'] = None
@@ -137,6 +168,12 @@ def sbml_to_json(input_folder, pathway_id='rp_pathway', sink_species_group_id='r
                 reac_nodes[tmp_smiles] = node
             # Update already existing node
             else:
+                try:
+                    node['rule_score'] = round(brsynth_annot['rule_score']['value'], 3)
+                    pathway_rule_scores.append(brsynth_annot['rule_score']['value'])
+                except KeyError:
+                    node['rule_score'] = None
+                    pathway_rule_scores.append(0.0)
                 if rpsbml.modelName not in reac_nodes[node_id]['path_ids']:
                     reac_nodes[node_id]['path_ids'].append(rpsbml.modelName)
                 if brsynth_annot['rule_id'] not in reac_nodes[node_id]['all_labels']:
@@ -152,6 +189,7 @@ def sbml_to_json(input_folder, pathway_id='rp_pathway', sink_species_group_id='r
             # Keep track for pathway info
             if node_id not in pathways_info[rpsbml.modelName]['node_ids']:
                 pathways_info[rpsbml.modelName]['node_ids'].append(node_id)
+        pathways_info[rpsbml.modelName]['rule_score'] = round(mean(pathway_rule_scores), 3)
         ################# CHEMICALS #########################
         ## compile all the species that are sink molecules
         #
@@ -187,7 +225,6 @@ def sbml_to_json(input_folder, pathway_id='rp_pathway', sink_species_group_id='r
             if node_id not in chem_nodes:
                 node = dict()
                 node['id'] = node_id
-                print()
                 node['path_ids'] = [rpsbml.modelName]
                 node['type'] = 'chemical'
                 node['label'] = node_id
@@ -218,24 +255,19 @@ def sbml_to_json(input_folder, pathway_id='rp_pathway', sink_species_group_id='r
                 node['rsmiles'] = None
                 node['rule_id'] = None
                 node['ec_numbers'] = None
-                node['thermo_dg_m_gibbs'] = None 
+                node['thermo_dg_m_gibbs'] = None
                 #node['fba_reaction'] = None
-                tmp_smiles = None
-                tmp_inchi = None
-                tmp_inchikey = None
+                node['rule_score'] = None
                 try:
                     node['smiles'] = brsynth_annot['smiles']
-                    tmp_smiles = brsynth_annot['smiles']
                 except KeyError:
                     node['smiles'] = None
                 try:
                     node['inchi'] = brsynth_annot['inchi']
-                    tmp_inchi = brsynth_annot['inchi']
                 except KeyError:
                     node['inchi'] = None
                 try:
                     node['inchikey'] = brsynth_annot['inchikey']
-                    tmp_inchikey = brsynth_annot['inchikey']
                 except KeyError:
                     node['inchikey'] = None
                 #TODO: need a better way if not TARGET in name
@@ -258,7 +290,7 @@ def sbml_to_json(input_folder, pathway_id='rp_pathway', sink_species_group_id='r
                     chem_nodes[node_id]['path_ids'].append(rpsbml.modelName)
                 # TODO: manage xref, without adding duplicates
                 try:
-                    assert tmp_smiles == chem_nodes[node_id]['smiles']
+                    assert brsynth_annot.get('smiles', None) == chem_nodes[node_id]['smiles']
                 except AssertionError:
                     try:
                         msg = 'Not the same SMILES: {} vs. {}'.format(
@@ -267,10 +299,10 @@ def sbml_to_json(input_folder, pathway_id='rp_pathway', sink_species_group_id='r
                         )
                         logging.warning(msg)
                     except KeyError:
-                        logging.warning('The brsynth_annot has no smiles: '+str(node_id))
+                        logging.warning('The brsynth_annot has no smiles: ' + str(node_id))
                         logging.info(brsynth_annot)
                 try:
-                    assert tmp_inchi == chem_nodes[node_id]['inchi']
+                    assert brsynth_annot.get('inchi', None) == chem_nodes[node_id]['inchi']
                 except AssertionError:
                     try:
                         msg = 'Not the same INCHI: {} vs. {}'.format(
@@ -279,10 +311,10 @@ def sbml_to_json(input_folder, pathway_id='rp_pathway', sink_species_group_id='r
                         )
                         logging.warning(msg)
                     except KeyError:
-                        logging.warning('The brsynth_annot has no inchi: '+str(node_id))
+                        logging.warning('The brsynth_annot has no inchi: ' + str(node_id))
                         logging.info(brsynth_annot)
                 try:
-                    assert tmp_inchikey == chem_nodes[node_id]['inchikey']
+                    assert brsynth_annot.get('inchikey', None) == chem_nodes[node_id]['inchikey']
                 except AssertionError:
                     try:
                         msg = 'Not the same INCHIKEY: {} vs. {}'.format(
@@ -291,7 +323,7 @@ def sbml_to_json(input_folder, pathway_id='rp_pathway', sink_species_group_id='r
                         )
                         logging.warning(msg)
                     except KeyError:
-                        logging.warning('The brsynth_annot has no inchi: '+str(node_id))
+                        logging.warning('The brsynth_annot has no inchi: ' + str(node_id))
                         logging.info(brsynth_annot)
             # Keep track for pathway info
             if node_id not in pathways_info[rpsbml.modelName]['node_ids']:
@@ -495,6 +527,46 @@ def annotate_chemical_svg(network):
                 node['data']['svg'] = None
 
     return network
+
+
+def get_autonomous_html(ifolder):
+    """Merge all needed file into a single HTML
+    
+    :param ifolder: folder containing the files to be merged
+    :return html_str: string, the HTML
+    """
+    # find and open the index file 
+    htmlString = open(ifolder + '/index.html', 'rb').read() 
+    # open and read JS files and replace them in the HTML
+    jsReplace = [
+                 'js/chroma-2.1.0.min.js',
+                 'js/cytoscape-3.12.1.min.js',
+                 'js/cytoscape-dagre-2.2.1.js',
+                 'js/dagre-0.8.5.min.js',
+                 'js/jquery-3.4.1.min.js', 
+                 'js/jquery-ui-1.12.1.min.js',
+                 'js/jquery.tablesorter-2.31.2.min.js',
+                 'js/viewer.js'
+                ]
+    for js in jsReplace:
+        jsString = open(ifolder + '/' + js, 'rb').read()
+        ori = b'src="' + js.encode() + b'">'
+        rep = b'>' + jsString
+        htmlString = htmlString.replace(ori, rep)
+    # open and read style.css and replace it in the HTML
+    cssReplace = ['css/jquery.tablesorte.theme.default-2.31.2.min.css',
+                  'css/viewer.css']
+    for css_file in cssReplace:
+        cssBytes = open(ifolder + '/' + css_file, 'rb').read() 
+        ori = b'<link href="' + css_file.encode() + b'" rel="stylesheet" type="text/css"/>'
+        rep = b'<style type="text/css">' + cssBytes + b'</style>'
+        htmlString = htmlString.replace(ori, rep)
+    ### replace the network
+    netString = open(ifolder + '/network.json', 'rb').read()
+    ori = b'src="' + 'network.json'.encode() + b'">'
+    rep = b'>' + netString
+    htmlString = htmlString.replace(ori, rep)
+    return htmlString
 
 
 if __name__ == '__main__':

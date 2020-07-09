@@ -70,6 +70,7 @@ __license__ = 'MIT'
                     </div>
                     <input id="view_all_pathways_button" type="button" value="Show all pathways"/>
                     <input id="hide_all_pathways_button" type="button" value="Hide all pathways"/>
+                    <input id="redraw_pathways_button" type="button" value="Refresh layout"/>
                 </div>
                 <div id="cofacor_handling">
                     <div class="info-title">Cofactor options</div>
@@ -140,6 +141,11 @@ __license__ = 'MIT'
                             <div class="info-subtitle">Is a cofactor?</div>
                             <div class="raw-text"><span class="chem_info_iscofactor"></span></div>
                         </div>
+                        <!-- Precursor -->
+                        <div>
+                            <div class="info-subtitle">Is a precursor?</div>
+                            <div class="raw-text"><span class="chem_info_isprecursor"></span></div>
+                        </div>
                         <!-- Crosslinks -->
                         <div>
                             <div class="info-subtitle">Crosslinks</div>
@@ -170,6 +176,11 @@ __license__ = 'MIT'
                         <div>
                             <div class="info-subtitle">&#916;<sub>r</sub>G' (kJ/mol)</div>
                             <div class="raw-text"><span class="reaction_info_thermo"></span></div>
+                        </div>
+                        <!-- Rule score -->
+                        <div>
+                            <div class="info-subtitle">Rule score</div>
+                            <div class="raw-text"><span class="reaction_info_rule_score"></span></div>
                         </div>
                         <!-- Reaction SMILES -->
                         <div>
@@ -211,6 +222,11 @@ __license__ = 'MIT'
                         <div>
                             <div class="info-subtitle">&#916;<sub>r</sub>G' (kJ/mol)</div>
                             <div class="raw-text"><span class="pathway_info_thermo"></span></div>
+                        </div>
+                        <!-- Rule score -->
+                        <div>
+                            <div class="info-subtitle">Rule score</div>
+                            <div class="raw-text"><span class="pathway_info_rule_score"></span></div>
                         </div>
                         <!-- FBA -->
                         <div>
