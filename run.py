@@ -55,7 +55,7 @@ def main(inputTar,
         if not 'ERROR' in err_str:
             shutil.copy(tmpOutputFolder+'/output.dat', outputHTML)
         else:
-            sbml_path
+            print(err_str)
         container.remove()
 
 
