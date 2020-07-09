@@ -27,7 +27,7 @@ python -m rpviz.cli '../data/Galaxy1015-[rpGlobalScore].tar' ../data/outfolder_t
 ### Build the docker
 
 ```
-docker build -t brsynth/rpvisualiser-standalone:survey .
+docker build -t brsynth/rpvisualiser-standalone:dev .
 ```
 
 ## Setting up
