@@ -24,7 +24,7 @@ def main(inputTar,
          input_format,
          output):
     docker_client = docker.from_env()
-    image_str = 'brsynth/rpvisualiser-standalone:v1'
+    image_str = 'brsynth/rpvisualiser-standalone:v2'
     try:
         image = docker_client.images.get(image_str)
     except docker.errors.ImageNotFound:

@@ -1,4 +1,4 @@
-FROM brsynth/rpbase:v1
+FROM brsynth/rpbase:v2
 
 WORKDIR /home/
 
