@@ -1,7 +1,7 @@
 <tool id="rpVisualiser" name="Pathway Visualiser" version="0.1" >
 	<description>Pathway Visualiser</description>
 	<requirements>
-    <container type="docker">brsynth/rpvisualiser-standalone</container>
+    <container type="docker">brsynth/rpvisualiser-standalone:v1</container>
 	</requirements>
 	<command detect_errors="exit_code"><![CDATA[
 		'$__tool_directory__/tool_rpVisualiser.py' -input '$input_type.input' -input_format '$input_type.input_format' -output '$output'
